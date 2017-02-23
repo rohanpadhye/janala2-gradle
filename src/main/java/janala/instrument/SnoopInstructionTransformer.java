@@ -16,7 +16,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
   private boolean writeInstrumentedClasses = true;
   private String instDir = "instrumented";
   public SnoopInstructionTransformer() {
-    writeInstrumentedClasses = true;
+    writeInstrumentedClasses = Config.instance.writeInstrumentedClasses;
     instDir = "instrumented";
   }
   
@@ -26,7 +26,6 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
 
   /** packages that should be exluded from the instrumentation */
   private static boolean shouldExclude(String cname) {
-
     String[] exclude = {"com/sun", "sun", "java", "jdk", "com/google/monitoring",
                         "janala", "dk/brics"};
     for (String e : exclude) {

@@ -19,6 +19,7 @@ public class Config {
 
   public boolean isTest;
   public boolean verbose;
+  public boolean writeInstrumentedClasses = true;
   public boolean printTrace;
   public boolean printConstraints;
   public String analysisClass;
@@ -54,6 +55,7 @@ public class Config {
 
       isTest = properties.getProperty("catg.isInternalTestMode", "false").equals("true");
       verbose = properties.getProperty("catg.isVerbose", "false").equals("true");
+      writeInstrumentedClasses = properties.getProperty("janala.writeInstrumentedClasses", "true").equals("true");
       printHistory = properties.getProperty("catg.isPrintHistory", "false").equals("true");
       printTrace = properties.getProperty("catg.isPrintTrace", "false").equals("true");
       printConstraints = properties.getProperty("catg.isPrintConstraints", "false").equals("true");
