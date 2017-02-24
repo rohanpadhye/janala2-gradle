@@ -21,6 +21,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
   }
   
   public static void premain(String agentArgs, Instrumentation inst) {
+    Coverage.read(Config.instance.coverage);
     inst.addTransformer(new SnoopInstructionTransformer());
   }
 
@@ -58,10 +59,9 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
     boolean toInstrument = !shouldExclude(cname);
 
     if (toInstrument) {
-      Coverage.read(Config.instance.coverage);
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
       ClassReader cr = new ClassReader(cbuf);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
+      ClassWriter cw = new SafeClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
       ClassVisitor cv = new SnoopInstructionClassAdapter(cw);
 
       try {
