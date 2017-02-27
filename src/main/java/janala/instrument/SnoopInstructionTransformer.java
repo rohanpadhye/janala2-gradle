@@ -11,6 +11,8 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class SnoopInstructionTransformer implements ClassFileTransformer {
   private boolean writeInstrumentedClasses = true;
@@ -20,26 +22,31 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
     instDir = "instrumented";
   }
   
+  private static Collection<String> banned;
+  private static Collection<String> excludes;
+  private static Collection<String> includes;
+  
   public static void premain(String agentArgs, Instrumentation inst) {
     Coverage.read(Config.instance.coverage);
+    banned = Arrays.asList("java/lang", "com/sun", "janala", "org/objectweb/asm", "sun", "jdk");
+    excludes = Arrays.asList(Config.instance.excludeInst);
+    includes = Arrays.asList(Config.instance.includeInst);
     inst.addTransformer(new SnoopInstructionTransformer());
   }
 
   /** packages that should be exluded from the instrumentation */
   private static boolean shouldExclude(String cname) {
-    String[] exclude = {"com/sun", "sun", "java", "jdk", "com/google/monitoring",
-                        "janala", "dk/brics"};
-    for (String e : exclude) {
+    for (String e : banned) {
       if (cname.startsWith(e)) {
         return true;
       }
     }
-    for (String e : Config.instance.includeList) {
+    for (String e : includes) {
       if (cname.startsWith(e)) {
         return false;
       }
     }
-    for (String e : Config.instance.excludeList) {
+    for (String e : excludes) {
       if (cname.startsWith(e)) {
         return true;
       }
@@ -59,6 +66,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
     boolean toInstrument = !shouldExclude(cname);
 
     if (toInstrument) {
+      // System.out.println("Instrumenting: " + cname);
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
       ClassReader cr = new ClassReader(cbuf);
       ClassWriter cw = new SafeClassWriter(cr, ClassWriter.COMPUTE_FRAMES);

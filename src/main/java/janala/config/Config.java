@@ -33,6 +33,8 @@ public class Config {
   public String cvc4Command = "cvc4";
   public String[] excludeList;
   public String[] includeList;
+  public String[] excludeInst = new String[0];
+  public String[] includeInst = new String[0];
   private String loggerClass;
   private String solver;
   private String strategy;
@@ -78,6 +80,12 @@ public class Config {
       strategy = properties.getProperty("catg.strategyClass", "janala.solvers.DFSStrategy");
       excludeList = properties.getProperty("catg.excludeList", "").split(",");
       includeList = properties.getProperty("catg.includeList", "catg.CATG").split(",");
+      String excludeInstStr = properties.getProperty("janala.excludes", "");
+      if (excludeInstStr.length() > 0) 
+        excludeInst = excludeInstStr.split(",");
+      String includeInstStr = properties.getProperty("janala.includes", "");
+      if (includeInstStr.length() > 0)
+        includeInst = includeInstStr.split(",");
       maxStringLength = Integer.parseInt(properties.getProperty("catg.maxStringLength", "30"));
       pathId = Integer.parseInt(properties.getProperty("catg.pathId", "1"));
       scopeBeginMarker = properties.getProperty("catg.scopeBeginMarker", "begin$$$$");
