@@ -28,10 +28,22 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
   
   public static void premain(String agentArgs, Instrumentation inst) {
     Coverage.read(Config.instance.coverage);
-    banned = Arrays.asList("java/lang", "com/sun", "janala", "org/objectweb/asm", "sun", "jdk");
+    banned = Arrays.asList("[", "java/lang", "com/sun", "janala", "org/objectweb/asm", "sun", "jdk");
     excludes = Arrays.asList(Config.instance.excludeInst);
     includes = Arrays.asList(Config.instance.includeInst);
-    inst.addTransformer(new SnoopInstructionTransformer());
+    inst.addTransformer(new SnoopInstructionTransformer(), true);
+    if (inst.isRetransformClassesSupported()) {
+      try {
+        for (Class clazz : inst.getAllLoadedClasses()) {
+          String cname = clazz.getName().replace(".","/");
+          if (cname != null && inst.isModifiableClass(clazz) && shouldExclude(cname) == false) {
+            inst.retransformClasses(clazz);
+          }
+        }
+      } catch (Exception e){
+        e.printStackTrace();
+      }
+    }
   }
 
   /** packages that should be exluded from the instrumentation */
@@ -59,14 +71,13 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
       ProtectionDomain d, byte[] cbuf)
     throws IllegalClassFormatException {
 
-    if (classBeingRedefined != null) {
-      return cbuf;
-    }
-
     boolean toInstrument = !shouldExclude(cname);
 
     if (toInstrument) {
-      // System.out.println("Instrumenting: " + cname);
+      if (classBeingRedefined != null) {
+        // System.out.print("[RETRANSFORM] ");
+      }
+      // System.out.print("Instrumenting: " + cname + "... ");
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
       ClassReader cr = new ClassReader(cbuf);
       ClassWriter cw = new SafeClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
@@ -74,8 +85,10 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
 
       try {
         cr.accept(cv, 0);
-      } catch (Exception e) {
+        // System.out.println("Done!");
+      } catch (Throwable e) {
         e.printStackTrace();
+        return null;
       }
 
       byte[] ret = cw.toByteArray();

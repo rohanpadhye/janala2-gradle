@@ -50,7 +50,11 @@ jacoco { toolVersion = "0.7.5.201505241946" }
 
 version = '0.2'
 jar {
-  manifest { attributes 'Premain-Class': 'janala.instrument.SnoopInstructionTransformer' }
+  manifest { 
+    attributes 'Premain-Class': 'janala.instrument.SnoopInstructionTransformer',
+      'Can-Retransform-Classes': 'true',
+      'Can-Set-Native-Method-Prefix': 'true'
+  }
 }
 
 task integrationTest (type: Test) {
