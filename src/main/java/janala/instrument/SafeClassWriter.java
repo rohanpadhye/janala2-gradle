@@ -172,7 +172,8 @@ public class SafeClassWriter extends ClassWriter {
      *             if the bytecode of 'type' cannot be loaded.
      */
     private ClassReader typeInfo(final String type) throws IOException {
-        InputStream is = l.getResourceAsStream(type + ".class");
+        String resource = type + ".class";
+        InputStream is = l != null ? l.getResourceAsStream(resource) : ClassLoader.getSystemResourceAsStream(resource);
         try {
             return new ClassReader(is);
         } finally {
