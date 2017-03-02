@@ -343,6 +343,8 @@ public interface Logger {
 
   public void GETVALUE_void();
 
+  public void METHOD_BEGIN(String owner, String name, String desc);
+
   public void INVOKEMETHOD_EXCEPTION();
 
   public void INVOKEMETHOD_END();

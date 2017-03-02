@@ -28,20 +28,24 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
   
   public static void premain(String agentArgs, Instrumentation inst) {
     Coverage.read(Config.instance.coverage);
-    banned = Arrays.asList("[", "java/lang", "com/sun", "janala", "org/objectweb/asm", "sun", "jdk");
+    banned = Arrays.asList("[", "java/lang", "com/sun", "janala", "org/objectweb/asm", "sun", "jdk", "java/util/function");
     excludes = Arrays.asList(Config.instance.excludeInst);
     includes = Arrays.asList(Config.instance.includeInst);
     inst.addTransformer(new SnoopInstructionTransformer(), true);
     if (inst.isRetransformClassesSupported()) {
-      try {
-        for (Class clazz : inst.getAllLoadedClasses()) {
+      for (Class clazz : inst.getAllLoadedClasses()) {
+        try {
           String cname = clazz.getName().replace(".","/");
-          if (cname != null && inst.isModifiableClass(clazz) && shouldExclude(cname) == false) {
-            inst.retransformClasses(clazz);
+          if (shouldExclude(cname) == false) {
+            if (inst.isModifiableClass(clazz)) {
+              inst.retransformClasses(clazz);
+            } else {
+              System.out.println("Could not instrument " + clazz + " :-(");
+            }
           }
+        } catch (Exception e){
+          e.printStackTrace();
         }
-      } catch (Exception e){
-        e.printStackTrace();
       }
     }
   }
@@ -75,13 +79,13 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
 
     if (toInstrument) {
       if (classBeingRedefined != null) {
-        // System.out.print("[RETRANSFORM] ");
+        // System.out.print("* ");
       }
       // System.out.print("Instrumenting: " + cname + "... ");
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
       ClassReader cr = new ClassReader(cbuf);
       ClassWriter cw = new SafeClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
-      ClassVisitor cv = new SnoopInstructionClassAdapter(cw);
+      ClassVisitor cv = new SnoopInstructionClassAdapter(cw, cname);
 
       try {
         cr.accept(cv, 0);

@@ -690,6 +690,10 @@ public abstract class AbstractLogger implements Logger {
     log(new GETVALUE_void());
   }
 
+  public void METHOD_BEGIN(String owner, String name, String desc) {
+    log(new METHOD_BEGIN(owner, name, desc));
+  }
+
   public void INVOKEMETHOD_EXCEPTION() {
     log(new INVOKEMETHOD_EXCEPTION());
   }

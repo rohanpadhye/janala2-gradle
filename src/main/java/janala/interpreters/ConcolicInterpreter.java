@@ -1,7 +1,5 @@
 package janala.interpreters;
 
-import static janala.interpreters.ObjectValue.ADDRESS_UNKNOWN;
-
 import janala.Main;
 import janala.config.Config;
 import janala.instrument.Coverage;
@@ -18,6 +16,8 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static janala.interpreters.ObjectValue.ADDRESS_UNKNOWN;
 
 public class ConcolicInterpreter implements IVisitor {
   private Stack<Frame> stack;
@@ -1079,6 +1079,10 @@ public class ConcolicInterpreter implements IVisitor {
         currentFrame.setRet(staticInv.invokeMethod(inst.iid, owner, name, tmpValues, history));
       }
     }
+  }
+
+  public void visitMETHOD_BEGIN(METHOD_BEGIN inst) {
+
   }
 
   public void visitINVOKEINTERFACE(INVOKEINTERFACE inst) {

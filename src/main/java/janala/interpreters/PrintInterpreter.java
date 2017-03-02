@@ -710,6 +710,8 @@ public class PrintInterpreter implements IVisitor {
     System.out.println(inst);
   }
 
+  public void visitMETHOD_BEGIN(METHOD_BEGIN inst) { System.out.println(inst);  }
+
   public void visitINVOKEMETHOD_END(INVOKEMETHOD_END inst) {
     System.out.println(inst);
   }

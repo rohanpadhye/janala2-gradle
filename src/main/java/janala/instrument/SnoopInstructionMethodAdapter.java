@@ -14,16 +14,24 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   LinkedList<TryCatchBlock> tryCatchBlocks;
   boolean calledNew = false;
 
+  private final String className;
+  private final String methodName;
+  private final String descriptor;
+
   private final Coverage coverage;
   private final GlobalStateForInstrumentation instrumentationState;
   private final ClassNames classNames;
 
-  public SnoopInstructionMethodAdapter(MethodVisitor mv, boolean isInit, 
+  public SnoopInstructionMethodAdapter(MethodVisitor mv, String className,
+      String methodName, String descriptor,
       Coverage coverage, GlobalStateForInstrumentation instrumentationState,
       ClassNames classNames) {
     super(ASM5, mv);
-    this.isInit = isInit;
+    this.isInit = methodName.equals("<init>");
     this.isSuperInitCalled = false;
+    this.className = className;
+    this.methodName = methodName;
+    this.descriptor = descriptor;
     tryCatchBlocks = new LinkedList<TryCatchBlock>();
 
     this.coverage = coverage;
@@ -35,6 +43,11 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   public void visitCode() {
     instrumentationState.incMid();
     coverage.setCidmidToName(instrumentationState.getMid());
+    mv.visitLdcInsn(className);
+    mv.visitLdcInsn(methodName);
+    mv.visitLdcInsn(descriptor);
+    mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "METHOD_BEGIN", 
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", false);
     mv.visitCode();
   }
 

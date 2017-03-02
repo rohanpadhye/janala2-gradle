@@ -695,6 +695,10 @@ public final class DJVM {
   public static void GETVALUE_void() {
     intp.GETVALUE_void();
   }
+  
+  public static void METHOD_BEGIN(String owner, String name, String desc) {
+    intp.METHOD_BEGIN(owner, name, desc);
+  }
 
   public static void INVOKEMETHOD_EXCEPTION() {
     intp.INVOKEMETHOD_EXCEPTION();
