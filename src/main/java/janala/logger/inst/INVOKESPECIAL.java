@@ -1,6 +1,6 @@
 package janala.logger.inst;
 
-public class INVOKESPECIAL extends Instruction {
+public class INVOKESPECIAL extends Instruction implements MemberRef {
   public String owner;
   public String name;
   public String desc;
@@ -28,5 +28,20 @@ public class INVOKESPECIAL extends Instruction {
         + name
         + " desc="
         + desc;
+  }
+
+  @Override
+  public String getOwner() {
+    return owner;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getDesc() {
+    return desc;
   }
 }

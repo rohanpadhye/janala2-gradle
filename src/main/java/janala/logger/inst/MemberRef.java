@@ -33,4 +33,7 @@ package janala.logger.inst;
  * @author Rohan Padhye
  */
 public interface MemberRef {
+    String getOwner();
+    String getName();
+    String getDesc();
 }
