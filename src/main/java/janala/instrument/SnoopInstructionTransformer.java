@@ -7,9 +7,11 @@ import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
+import java.nio.file.Files;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
@@ -79,17 +81,30 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
 
     if (toInstrument) {
       if (classBeingRedefined != null) {
-        // System.out.print("* ");
+        System.out.print("* ");
       }
-      // System.out.print("Instrumenting: " + cname + "... ");
+      System.out.print("Instrumenting: " + cname + "... ");
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
+
+      File cachedFile = new File(instDir + "/" + cname + ".class");
+      if (classBeingRedefined == null && cachedFile.exists()) {
+        try {
+          byte[] instBytes = Files.readAllBytes(cachedFile.toPath());
+          System.out.println(" Found in cache!");
+          return instBytes;
+        } catch (IOException e) {
+          System.out.print(" <cache error> ");
+        }
+      }
+
+
       ClassReader cr = new ClassReader(cbuf);
       ClassWriter cw = new SafeClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
       ClassVisitor cv = new SnoopInstructionClassAdapter(cw, cname);
 
       try {
         cr.accept(cv, 0);
-        // System.out.println("Done!");
+        System.out.println("Done!");
       } catch (Throwable e) {
         e.printStackTrace();
         return null;
