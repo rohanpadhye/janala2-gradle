@@ -347,6 +347,8 @@ public interface IVisitor {
 
   public void visitMETHOD_BEGIN(METHOD_BEGIN inst);
 
+  public void visitMETHOD_THROW(METHOD_THROW inst);
+
   public void visitINVOKEMETHOD_END(INVOKEMETHOD_END inst);
 
   public void visitMAKE_SYMBOLIC(MAKE_SYMBOLIC inst);

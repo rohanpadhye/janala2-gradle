@@ -13,6 +13,8 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   boolean isSuperInitCalled;
   LinkedList<TryCatchBlock> tryCatchBlocks;
   boolean calledNew = false;
+  Label methodBeginLabel = new Label();
+  Label methodEndLabel = new Label();
 
   private final String className;
   private final String methodName;
@@ -48,7 +50,9 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
     mv.visitLdcInsn(descriptor);
     mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "METHOD_BEGIN", 
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", false);
+    mv.visitLabel(methodBeginLabel);
     mv.visitCode();
+
   }
 
   /** Push a value onto the stack. */
@@ -918,6 +922,14 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
 
   @Override
   public void visitMaxs(int maxStack, int maxLocals) {
+    // Wrap entire method body in a try-catch all; the methodBeginLabel is already added in visitCode()
+    tryCatchBlocks.addLast(new TryCatchBlock(methodBeginLabel, methodEndLabel, methodEndLabel, null));
+
+    mv.visitLabel(methodEndLabel);
+     mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "METHOD_THROW", "()V", false);
+    mv.visitInsn(ATHROW);
+
+
     for (TryCatchBlock b : tryCatchBlocks) {
       b.visit(mv);
     }

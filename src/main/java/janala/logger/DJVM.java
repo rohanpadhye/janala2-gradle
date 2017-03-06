@@ -700,6 +700,10 @@ public final class DJVM {
     intp.METHOD_BEGIN(owner, name, desc);
   }
 
+  public static void METHOD_THROW() {
+    intp.METHOD_THROW();
+  }
+
   public static void INVOKEMETHOD_EXCEPTION() {
     intp.INVOKEMETHOD_EXCEPTION();
   }

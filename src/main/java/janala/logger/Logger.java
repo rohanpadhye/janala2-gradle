@@ -345,6 +345,8 @@ public interface Logger {
 
   public void METHOD_BEGIN(String owner, String name, String desc);
 
+  public void METHOD_THROW();
+
   public void INVOKEMETHOD_EXCEPTION();
 
   public void INVOKEMETHOD_END();

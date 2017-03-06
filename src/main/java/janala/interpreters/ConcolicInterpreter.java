@@ -1473,6 +1473,9 @@ public class ConcolicInterpreter implements IVisitor {
   public void visitSPECIAL(SPECIAL inst) {
   }
 
+  public void visitMETHOD_THROW(METHOD_THROW inst) {
+  }
+
   public void setNext(Instruction next) {
     this.next = next;
   }

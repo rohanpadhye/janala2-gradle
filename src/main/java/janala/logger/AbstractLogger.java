@@ -694,6 +694,8 @@ public abstract class AbstractLogger implements Logger {
     log(new METHOD_BEGIN(owner, name, desc));
   }
 
+  public void METHOD_THROW() {  log(new METHOD_THROW());  }
+
   public void INVOKEMETHOD_EXCEPTION() {
     log(new INVOKEMETHOD_EXCEPTION());
   }
