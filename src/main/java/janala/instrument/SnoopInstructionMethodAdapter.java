@@ -50,7 +50,10 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
     mv.visitLdcInsn(descriptor);
     mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "METHOD_BEGIN", 
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", false);
-    mv.visitLabel(methodBeginLabel);
+    if (isInit == false) {
+      // For non-constructor methods, the outer try-catch blocks wraps around the entire code
+      mv.visitLabel(methodBeginLabel);
+    }
     mv.visitCode();
 
   }
@@ -677,7 +680,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   @Override
   public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
     if (opcode == INVOKESPECIAL && name.equals("<init>")) {
-      if (isInit) {
+      if (isInit && isSuperInitCalled == false) {
         // This code is already inside an init method.
         //
         // Constructor calls to <init> method of the super class. If this is the
@@ -688,6 +691,10 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
         if (calledNew) {
           calledNew = false;
         }
+
+        // The outer try-catch starts after the call to super()
+        mv.visitLabel(methodBeginLabel);
+
       } else {
         addMethodWithTryCatch(opcode, owner, name, desc, itf);
         if (calledNew) {
@@ -926,7 +933,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
     tryCatchBlocks.addLast(new TryCatchBlock(methodBeginLabel, methodEndLabel, methodEndLabel, null));
 
     mv.visitLabel(methodEndLabel);
-     mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "METHOD_THROW", "()V", false);
+    mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "METHOD_THROW", "()V", false);
     mv.visitInsn(ATHROW);
 
 
