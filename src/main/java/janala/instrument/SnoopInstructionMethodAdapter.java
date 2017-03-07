@@ -660,7 +660,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   @Override
   public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
     if (opcode == INVOKESPECIAL && name.equals("<init>")) {
-      if (isInit) {
+      if (isInit && isSuperInitCalled == false) {
         // This code is already inside an init method.
         //
         // Constructor calls to <init> method of the super class. If this is the
