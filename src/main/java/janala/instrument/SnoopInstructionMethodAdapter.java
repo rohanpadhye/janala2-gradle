@@ -3,6 +3,7 @@ package janala.instrument;
 import janala.config.Config;
 import janala.logger.ClassNames;
 import janala.logger.ObjectInfo;
+import janala.logger.inst.SPECIAL;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Label;
@@ -687,10 +688,33 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
         // case, there is no need to wrap the method call in try catch block as
         // it uses uninitialized this object.
         isSuperInitCalled = true;
+
+
+        // Register the call to <init>
+        addSpecialInsn(mv, SPECIAL.CALLING_SUPER_OR_THIS); // for true path
+        addBipushInsn(mv, instrumentationState.incAndGetId());
+        addBipushInsn(mv, instrumentationState.getMid());
+        mv.visitLdcInsn(owner);
+        mv.visitLdcInsn(name);
+        mv.visitLdcInsn(desc);
+        mv.visitMethodInsn(
+                INVOKESTATIC,
+                Config.instance.analysisClass,
+                getMethodName(opcode),
+                "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", false);
+
+
+        // Call <init>
         mv.visitMethodInsn(opcode, owner, name, desc, itf);
         if (calledNew) {
           calledNew = false;
         }
+
+        // Mark end of <init>
+        // Note: If <init> throws an exception, we do not log it, due to JVM restrictions;
+        //   this must be inferred from the logs somehow
+        mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "INVOKEMETHOD_END", "()V", false);
+
 
         // The outer try-catch starts after the call to super()
         mv.visitLabel(methodBeginLabel);

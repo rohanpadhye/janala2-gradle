@@ -4,6 +4,11 @@ package janala.logger.inst;
   * The int value identifies which branch does the instruction correspond to. 
   */
 public class SPECIAL extends Instruction {
+
+  public static final int NON_EXCEPTIONAL = 0;
+  public static final int DID_NOT_BRANCH = 1;
+  public static final int CALLING_SUPER_OR_THIS = 2;
+
   public int i;
 
   public SPECIAL(int i) {
