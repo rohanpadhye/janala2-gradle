@@ -13,9 +13,8 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
 import java.security.ProtectionDomain;
-import java.util.Arrays;
-import java.util.Collection;
 
+@SuppressWarnings("unused") // Registered via -javaagent
 public class SnoopInstructionTransformer implements ClassFileTransformer {
   private boolean writeInstrumentedClasses = true;
   private String instDir = "instrumented";
@@ -24,15 +23,14 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
     instDir = "instrumented";
   }
   
-  private static Collection<String> banned;
-  private static Collection<String> excludes;
-  private static Collection<String> includes;
+  private static String[] banned = {"[", "java/lang", "com/sun", "janala", "org/objectweb/asm", "sun", "jdk", "java/util/function"};
+  private static String[]  excludes;
+  private static String[]  includes;
   
   public static void premain(String agentArgs, Instrumentation inst) {
     Coverage.read(Config.instance.coverage);
-    banned = Arrays.asList("[", "java/lang", "com/sun", "janala", "org/objectweb/asm", "sun", "jdk", "java/util/function");
-    excludes = Arrays.asList(Config.instance.excludeInst);
-    includes = Arrays.asList(Config.instance.includeInst);
+    excludes = Config.instance.excludeInst;
+    includes = Config.instance.includeInst;
     inst.addTransformer(new SnoopInstructionTransformer(), true);
     if (inst.isRetransformClassesSupported()) {
       for (Class clazz : inst.getAllLoadedClasses()) {
@@ -87,7 +85,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
 
       File cachedFile = new File(instDir + "/" + cname + ".class");
-      if (classBeingRedefined == null && cachedFile.exists()) {
+      if (false && cachedFile.exists()) {
         try {
           byte[] instBytes = Files.readAllBytes(cachedFile.toPath());
           System.out.println(" Found in cache!");
@@ -99,7 +97,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
 
 
       ClassReader cr = new ClassReader(cbuf);
-      ClassWriter cw = new SafeClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
+      ClassWriter cw = new SafeClassWriter(cr, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
       ClassVisitor cv = new SnoopInstructionClassAdapter(cw, cname);
 
       try {

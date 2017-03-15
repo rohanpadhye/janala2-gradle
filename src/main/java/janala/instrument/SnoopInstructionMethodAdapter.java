@@ -538,7 +538,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
     }
     mv.visitIntInsn(opcode, operand);
   }
-
+`
   @Override
   public void visitTypeInsn(int opcode, String type) {
     switch (opcode) {
