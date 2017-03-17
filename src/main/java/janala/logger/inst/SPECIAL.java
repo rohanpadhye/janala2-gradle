@@ -8,6 +8,7 @@ public class SPECIAL extends Instruction {
   public static final int NON_EXCEPTIONAL = 0;
   public static final int DID_NOT_BRANCH = 1;
   public static final int CALLING_SUPER_OR_THIS = 2;
+  public static final int THREAD_INIT = 3;
 
   public int i;
 

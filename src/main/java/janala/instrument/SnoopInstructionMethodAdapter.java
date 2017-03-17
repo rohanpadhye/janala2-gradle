@@ -2,11 +2,11 @@ package janala.instrument;
 
 import janala.config.Config;
 import janala.logger.ClassNames;
-import janala.logger.ObjectInfo;
 import janala.logger.inst.SPECIAL;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Label;
+
 import java.util.LinkedList;
 
 public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opcodes {
@@ -45,7 +45,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   @Override
   public void visitCode() {
     instrumentationState.incMid();
-    coverage.setCidmidToName(instrumentationState.getMid());
+    coverage.setCidmidToName(lastLineNumber);
     mv.visitLdcInsn(className);
     mv.visitLdcInsn(methodName);
     mv.visitLdcInsn(descriptor);
@@ -66,7 +66,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
 
   /** Add a GETVALUE call to synchronize the top stack with that of the symbolic stack. */
   private void addValueReadInsn(MethodVisitor mv, String desc, String methodNamePrefix) {
-    Utils.addValueReadInsn(mv, desc, methodNamePrefix);
+    //Utils.addValueReadInsn(mv, desc, methodNamePrefix);
   }
 
   /** Add a special probe instruction. */
@@ -76,7 +76,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
 
   private void addInsn(MethodVisitor mv, String insn, int opcode) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, insn, "(II)V", false);
 
     mv.visitInsn(opcode);
@@ -85,7 +85,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   /** Add var insn and its instrumentation code. */
   private void addVarInsn(MethodVisitor mv, int var, String insn, int opcode) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     addBipushInsn(mv, var);
     mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, insn, "(III)V", false);
 
@@ -94,21 +94,17 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
 
   private void addTypeInsn(MethodVisitor mv, String type, int opcode, String name) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     mv.visitLdcInsn(type);
     mv.visitMethodInsn(
       INVOKESTATIC, Config.instance.analysisClass, name, "(IILjava/lang/String;)V", false);
     mv.visitTypeInsn(opcode, type);
   }
 
-  @Override
-  public void visitLineNumber(int lineNumber, Label label) {
-    mv.visitLineNumber(lineNumber, label);
-  }
 
   @Override
   public void visitInsn(int opcode) {
-    switch (opcode) {
+    switch (opcode) {/*
       case NOP:
         addInsn(mv, "NOP", opcode);
         break;
@@ -427,7 +423,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
         break;
       case DCMPG:
         addInsn(mv, "DCMPG", opcode);
-        break;
+        break;*/
       case IRETURN:
         addInsn(mv, "IRETURN", opcode);
         break;
@@ -446,7 +442,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
       case RETURN:
         addInsn(mv, "RETURN", opcode);
         break;
-      case ARRAYLENGTH:
+      /*case ARRAYLENGTH:
         addInsn(mv, "ARRAYLENGTH", opcode);
         addSpecialInsn(mv, 0); // for non-exceptional path
         addValueReadInsn(mv, "I", "GETVALUE_");
@@ -461,13 +457,14 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
       case MONITOREXIT:
         addInsn(mv, "MONITOREXIT", opcode);
         addSpecialInsn(mv, 0); // for non-exceptional path
-        break;
+        break;*/
       default:
-        throw new RuntimeException("Unknown instruction opcode " + opcode);
+        mv.visitInsn(opcode); // Don't instrument other instructions
+        //throw new RuntimeException("Unknown instruction opcode " + opcode);
     }
   }
 
-  @Override
+  /*@Override
   public void visitVarInsn(int opcode, int var) {
     switch (opcode) {
       case ILOAD:
@@ -513,12 +510,12 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
       default:
         throw new RuntimeException("Unknown var insn");
     }
-  }
+  }*/
 
-  @Override
+  /*@Override
   public void visitIntInsn(int opcode, int operand) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     switch (opcode) {
       case BIPUSH:
         addBipushInsn(mv, operand);
@@ -537,14 +534,14 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
         throw new RuntimeException("Unknown int instruction opcode " + opcode);
     }
     mv.visitIntInsn(opcode, operand);
-  }
-`
-  @Override
+  }*/
+
+  /*@Override
   public void visitTypeInsn(int opcode, String type) {
     switch (opcode) {
       case NEW:
         addBipushInsn(mv, instrumentationState.incAndGetId());
-        addBipushInsn(mv, instrumentationState.getMid());
+        addBipushInsn(mv, lastLineNumber);
         mv.visitLdcInsn(type);
         int cIdx = classNames.get(type);
         addBipushInsn(mv, cIdx);
@@ -571,12 +568,12 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
       default:
         throw new RuntimeException("Unknown type instruction opcode " + opcode);
     }
-  }
+  }*/
 
-  @Override
+  /*@Override
   public void visitFieldInsn(int opcode, String owner, String name, String desc) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     int cIdx = classNames.get(owner);
     addBipushInsn(mv, cIdx);
     ObjectInfo tmp = classNames.get(cIdx);
@@ -627,7 +624,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
       default:
         throw new RuntimeException("Unknown field access opcode " + opcode);
     }
-  }
+  }*/
 
   private String getMethodName(int opcode) {
     switch (opcode) {
@@ -646,7 +643,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
 
   private void addMethodWithTryCatch(int opcode, String owner, String name, String desc, boolean itf) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
 
     mv.visitLdcInsn(owner);
     mv.visitLdcInsn(name);
@@ -681,6 +678,9 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   @Override
   public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
     if (opcode == INVOKESPECIAL && name.equals("<init>")) {
+
+
+
       if (isInit && isSuperInitCalled == false) {
         // This code is already inside an init method.
         //
@@ -693,7 +693,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
         // Register the call to <init>
         addSpecialInsn(mv, SPECIAL.CALLING_SUPER_OR_THIS); // for true path
         addBipushInsn(mv, instrumentationState.incAndGetId());
-        addBipushInsn(mv, instrumentationState.getMid());
+        addBipushInsn(mv, lastLineNumber);
         mv.visitLdcInsn(owner);
         mv.visitLdcInsn(name);
         mv.visitLdcInsn(desc);
@@ -716,6 +716,16 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
         mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "INVOKEMETHOD_END", "()V", false);
 
 
+
+        // Handle super() for Thread.<init> specially
+        // TODO: Handle direct calls to new Thread() without subclassing
+        if (owner.equals("java/lang/Thread")) {
+          addSpecialInsn(mv, SPECIAL.THREAD_INIT);
+          mv.visitVarInsn(ALOAD, 0);
+          Utils.addValueReadInsn(mv, "Ljava/lang/Object;", "GETVALUE_");
+          mv.visitInsn(POP);
+        }
+
         // The outer try-catch starts after the call to super()
         mv.visitLabel(methodBeginLabel);
 
@@ -726,6 +736,8 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
           addValueReadInsn(mv, "Ljava/lang/Object;", "GETVALUE_");
         }
       }
+
+
     } else {
       addMethodWithTryCatch(opcode, owner, name, desc, itf);
     }
@@ -735,8 +747,8 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   public void visitJumpInsn(int opcode, Label label) {
     int iid3;
     addBipushInsn(mv, iid3 = instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
-    addBipushInsn(mv, System.identityHashCode(label)); // label.getOffset()
+    addBipushInsn(mv, lastLineNumber);
+    addBipushInsn(mv, getLabelNum(label));
     switch (opcode) {
       case IFEQ:
         coverage.addBranchCount(iid3);
@@ -847,10 +859,10 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
     }
   }
 
-  @Override
+  /*@Override
   public void visitLdcInsn(Object cst) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     mv.visitLdcInsn(cst);
     if (cst instanceof Integer) {
       mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "LDC", "(III)V", false);
@@ -868,26 +880,42 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
           "LDC", "(IILjava/lang/Object;)V", false);
     }
     mv.visitLdcInsn(cst);
-  }
+  }*/
 
-  @Override
+  /*@Override
   public void visitIincInsn(int var, int increment) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     addBipushInsn(mv, var);
     addBipushInsn(mv, increment);
     mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "IINC", "(IIII)V", false);
     mv.visitIincInsn(var, increment);
+  }*/
+
+  private Integer lastLineNumber = 0;
+
+  @Override
+  public void visitLineNumber(int lineNumber, Label label) {
+    lastLineNumber = lineNumber;
   }
+
+
+  private int getLabelNum(Label label) {
+    return System.identityHashCode(label);
+  }
+
+
+
+
 
   @Override
   public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
     int iid3;
     addBipushInsn(mv, iid3 = instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     addBipushInsn(mv, min);
     addBipushInsn(mv, max);
-    addBipushInsn(mv, System.identityHashCode(dflt)); // label.getOffset()
+    addBipushInsn(mv, getLabelNum(dflt));
 
     addBipushInsn(mv, labels.length);
     mv.visitIntInsn(NEWARRAY, T_INT);
@@ -898,7 +926,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
       coverage.addBranchCount(iid3);
       mv.visitInsn(DUP);
       addBipushInsn(mv, i);
-      addBipushInsn(mv, System.identityHashCode(labels[i])); // label.getOffset()
+      addBipushInsn(mv, getLabelNum(labels[i]));
       mv.visitInsn(IASTORE);
     }
 
@@ -910,8 +938,8 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
   public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
     int iid3;
     addBipushInsn(mv, iid3 = instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
-    addBipushInsn(mv, System.identityHashCode(dflt)); // label.getOffset()
+    addBipushInsn(mv, lastLineNumber);
+    addBipushInsn(mv, getLabelNum(dflt));
 
     addBipushInsn(mv, keys.length);
     mv.visitIntInsn(NEWARRAY, T_INT);
@@ -931,7 +959,7 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
       coverage.addBranchCount(iid3);
       mv.visitInsn(DUP);
       addBipushInsn(mv, i);
-      addBipushInsn(mv, System.identityHashCode(labels[i])); // label.getOffset()
+      addBipushInsn(mv, getLabelNum(labels[i]));
       mv.visitInsn(IASTORE);
     }
 
@@ -939,17 +967,17 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
     mv.visitLookupSwitchInsn(dflt, keys, labels);
   }
 
-  @Override
+  /*@Override
   public void visitMultiANewArrayInsn(String desc, int dims) {
     addBipushInsn(mv, instrumentationState.incAndGetId());
-    addBipushInsn(mv, instrumentationState.getMid());
+    addBipushInsn(mv, lastLineNumber);
     mv.visitLdcInsn(desc);
     addBipushInsn(mv, dims);
     mv.visitMethodInsn(
         INVOKESTATIC, Config.instance.analysisClass, "MULTIANEWARRAY", "(IILjava/lang/String;I)V", false);
     mv.visitMultiANewArrayInsn(desc, dims);
     addSpecialInsn(mv, 0); // for non-exceptional path
-  }
+  }*/
 
   @Override
   public void visitMaxs(int maxStack, int maxLocals) {
@@ -966,7 +994,10 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
     }
     mv.visitMaxs(
         maxStack + 8,
-        maxLocals); //To change body of overridden methods use File | Settings | File Templates.
+        maxLocals);
+
+
+
   }
 
   @Override
