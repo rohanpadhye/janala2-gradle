@@ -720,10 +720,8 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
         // Handle super() for Thread.<init> specially
         // TODO: Handle direct calls to new Thread() without subclassing
         if (owner.equals("java/lang/Thread")) {
-          addSpecialInsn(mv, SPECIAL.THREAD_INIT);
           mv.visitVarInsn(ALOAD, 0);
-          Utils.addValueReadInsn(mv, "Ljava/lang/Object;", "GETVALUE_");
-          mv.visitInsn(POP);
+          mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "REGISTER_THREAD", "(Ljava/lang/Thread;)V", false);
         }
 
         // The outer try-catch starts after the call to super()
