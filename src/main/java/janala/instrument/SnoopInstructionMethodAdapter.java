@@ -458,6 +458,22 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
         addInsn(mv, "MONITOREXIT", opcode);
         addSpecialInsn(mv, 0); // for non-exceptional path
         break;*/
+
+
+      case IALOAD:
+      case LALOAD:
+      case FALOAD:
+      case DALOAD:
+      case AALOAD:
+      case BALOAD:
+      case CALOAD:
+      case SALOAD:
+        mv.visitInsn(DUP2); // Duplicate array reference and index
+        addBipushInsn(mv, instrumentationState.incAndGetId());
+        addBipushInsn(mv, lastLineNumber);
+        mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "HEAPLOAD2", "(Ljava/lang/Object;III)V", false);
+        mv.visitInsn(opcode); // Perform the actual operation
+        break;
       default:
         mv.visitInsn(opcode); // Don't instrument other instructions
         //throw new RuntimeException("Unknown instruction opcode " + opcode);
