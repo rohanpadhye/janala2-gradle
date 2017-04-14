@@ -618,6 +618,8 @@ public class ConcolicInterpreter implements IVisitor {
     currentFrame.push(f1.FSUB(f2));
   }
 
+  public void visitHEAPLOAD(HEAPLOAD inst) { }
+
   public void visitGETFIELD(GETFIELD inst) {
     try {
       ObjectInfo oi = cnames.get(inst.cIdx);

@@ -121,6 +121,8 @@ public interface IVisitor {
 
   public void visitGETSTATIC(GETSTATIC inst);
 
+  public void visitHEAPLOAD(HEAPLOAD inst);
+
   public void visitGETVALUE_Object(GETVALUE_Object inst);
 
   public void visitGETVALUE_boolean(GETVALUE_boolean inst);

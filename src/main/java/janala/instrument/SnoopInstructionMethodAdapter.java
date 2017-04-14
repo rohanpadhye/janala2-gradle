@@ -570,8 +570,9 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
     }
   }*/
 
-  /*@Override
+  @Override
   public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+    /*
     addBipushInsn(mv, instrumentationState.incAndGetId());
     addBipushInsn(mv, lastLineNumber);
     int cIdx = classNames.get(owner);
@@ -624,7 +625,16 @@ public class SnoopInstructionMethodAdapter extends MethodVisitor implements Opco
       default:
         throw new RuntimeException("Unknown field access opcode " + opcode);
     }
-  }*/
+    */
+    if (opcode == GETFIELD) {
+      mv.visitInsn(DUP); // Duplicate object reference
+      mv.visitLdcInsn(owner + "#" + name);
+      addBipushInsn(mv, instrumentationState.incAndGetId());
+      addBipushInsn(mv, lastLineNumber);
+      mv.visitMethodInsn(INVOKESTATIC, Config.instance.analysisClass, "HEAPLOAD1", "(Ljava/lang/Object;Ljava/lang/String;II)V", false);
+    }
+    mv.visitFieldInsn(opcode, owner, name, desc);
+  }
 
   private String getMethodName(int opcode) {
     switch (opcode) {

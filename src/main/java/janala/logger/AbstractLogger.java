@@ -149,6 +149,10 @@ public abstract class AbstractLogger implements Logger {
     log(new PUTFIELD(iid, mid, cIdx, fIdx, desc));
   }
 
+  public void HEAPLOAD(int iid, int mid, int objectId, String field) {
+    log(new HEAPLOAD(iid, mid, objectId, field));
+  }
+
   public void NEW(int iid, int mid, String type, int cIdx) {
     log(new NEW(iid, mid, type, cIdx));
   }

@@ -65,6 +65,8 @@ public interface Logger {
 
   public void INVOKEINTERFACE(int iid, int mid, String owner, String name, String desc);
 
+  public void HEAPLOAD(int iid, int mid, int objectId, String field);
+
   public void GETSTATIC(int iid, int mid, int cIdx, int fIdx, String desc);
 
   public void PUTSTATIC(int iid, int mid, int cIdx, int fIdx, String desc);

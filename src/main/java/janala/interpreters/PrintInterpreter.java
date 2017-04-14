@@ -258,6 +258,10 @@ public class PrintInterpreter implements IVisitor {
     System.out.println(inst);
   }
 
+  public void visitHEAPLOAD(HEAPLOAD inst) {
+    System.out.println(inst);
+  }
+
   public void visitGETSTATIC(GETSTATIC inst) {
     System.out.println(inst);
   }
