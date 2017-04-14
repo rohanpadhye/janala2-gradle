@@ -27,7 +27,10 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
   private static String[]  excludes;
   private static String[]  includes;
   
-  public static void premain(String agentArgs, Instrumentation inst) {
+  public static void premain(String agentArgs, Instrumentation inst) throws ClassNotFoundException {
+
+    preloadClasses();
+
     Coverage.read(Config.instance.coverage);
     excludes = Config.instance.excludeInst;
     includes = Config.instance.includeInst;
@@ -48,6 +51,15 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
         }
       }
     }
+  }
+
+  private static void preloadClasses() throws ClassNotFoundException {
+    Class.forName("java.util.ArrayDeque");
+    Class.forName("java.util.LinkedList");
+    Class.forName("java.util.LinkedList$Node");
+    Class.forName("java.util.LinkedList$ListItr");
+    Class.forName("java.util.TreeMap");
+    Class.forName("java.util.TreeMap$Entry");
   }
 
   /** packages that should be exluded from the instrumentation */
@@ -71,7 +83,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
   }
 
   @Override
-  public byte[] transform(ClassLoader loader, String cname, Class<?> classBeingRedefined,
+  synchronized public byte[] transform(ClassLoader loader, String cname, Class<?> classBeingRedefined,
       ProtectionDomain d, byte[] cbuf)
     throws IllegalClassFormatException {
 
@@ -85,7 +97,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
 
       File cachedFile = new File(instDir + "/" + cname + ".class");
-      if (false && cachedFile.exists()) {
+      if (cachedFile.exists()) {
         try {
           byte[] instBytes = Files.readAllBytes(cachedFile.toPath());
           System.out.println(" Found in cache!");
