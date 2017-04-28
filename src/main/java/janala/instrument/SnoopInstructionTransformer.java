@@ -43,7 +43,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
             if (inst.isModifiableClass(clazz)) {
               inst.retransformClasses(clazz);
             } else {
-              System.out.println("Could not instrument " + clazz + " :-(");
+              System.err.println("[JANALA] Could not instrument " + clazz + " :-(");
             }
           }
         } catch (Exception e){
@@ -90,20 +90,21 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
     boolean toInstrument = !shouldExclude(cname);
 
     if (toInstrument) {
+      System.err.print("[JANALA] ");
       if (classBeingRedefined != null) {
-        System.out.print("* ");
+        System.err.print("* ");
       }
-      System.out.print("Instrumenting: " + cname + "... ");
+      System.err.print("Instrumenting: " + cname + "... ");
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
 
       File cachedFile = new File(instDir + "/" + cname + ".class");
       if (cachedFile.exists()) {
         try {
           byte[] instBytes = Files.readAllBytes(cachedFile.toPath());
-          System.out.println(" Found in cache!");
+          System.err.println(" Found in cache!");
           return instBytes;
         } catch (IOException e) {
-          System.out.print(" <cache error> ");
+          System.err.print(" <cache error> ");
         }
       }
 
@@ -114,7 +115,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
 
       try {
         cr.accept(cv, 0);
-        System.out.println("Done!");
+        System.err.println("Done!");
       } catch (Throwable e) {
         e.printStackTrace();
         return null;
