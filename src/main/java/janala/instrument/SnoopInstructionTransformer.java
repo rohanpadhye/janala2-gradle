@@ -13,6 +13,8 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
 import java.security.ProtectionDomain;
+import java.util.Map;
+import java.util.TreeMap;
 
 @SuppressWarnings("unused") // Registered via -javaagent
 public class SnoopInstructionTransformer implements ClassFileTransformer {
@@ -82,6 +84,8 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
     return false;
   }
 
+  static Map<String, byte[]> instrumentedBytes = new TreeMap<>();
+
   @Override
   synchronized public byte[] transform(ClassLoader loader, String cname, Class<?> classBeingRedefined,
       ProtectionDomain d, byte[] cbuf)
@@ -97,11 +101,17 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
       System.err.print("Instrumenting: " + cname + "... ");
       GlobalStateForInstrumentation.instance.setCid(Coverage.instance.getCid(cname));
 
+      if (instrumentedBytes.containsKey(cname)) {
+        System.err.println(" Found in fast-cache!");
+        return instrumentedBytes.get(cname);
+      }
+
       File cachedFile = new File(instDir + "/" + cname + ".class");
       if (cachedFile.exists()) {
         try {
           byte[] instBytes = Files.readAllBytes(cachedFile.toPath());
-          System.err.println(" Found in cache!");
+          System.err.println(" Found in disk-cache!");
+          instrumentedBytes.put(cname, instBytes);
           return instBytes;
         } catch (IOException e) {
           System.err.print(" <cache error> ");
@@ -115,13 +125,15 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
 
       try {
         cr.accept(cv, 0);
-        System.err.println("Done!");
       } catch (Throwable e) {
         e.printStackTrace();
         return null;
       }
 
       byte[] ret = cw.toByteArray();
+      System.err.println("Done!");
+      instrumentedBytes.put(cname, ret);
+
       if (writeInstrumentedClasses) {
         try {
           File file = new File(instDir + "/" + cname + ".class");
