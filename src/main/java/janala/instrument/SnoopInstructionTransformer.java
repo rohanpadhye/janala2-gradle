@@ -1,10 +1,5 @@
 package janala.instrument;
 
-import janala.config.Config;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,8 +8,14 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
 import java.security.ProtectionDomain;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
+
+import janala.config.Config;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 
 @SuppressWarnings("unused") // Registered via -javaagent
 public class SnoopInstructionTransformer implements ClassFileTransformer {
@@ -22,7 +23,7 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
   private String instDir = "instrumented";
   public SnoopInstructionTransformer() {
     writeInstrumentedClasses = Config.instance.writeInstrumentedClasses;
-    instDir = "instrumented";
+    instDir = ".cache";
   }
   
   private static String[] banned = {"[", "java/lang", "com/sun", "janala", "org/objectweb/asm", "sun", "jdk", "java/util/function"};
@@ -106,13 +107,17 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
         return instrumentedBytes.get(cname);
       }
 
-      File cachedFile = new File(instDir + "/" + cname + ".class");
-      if (cachedFile.exists()) {
+      File cachedFile = new File(instDir + "/" + cname + ".instrumented.class");
+      File referenceFile = new File(instDir + "/" + cname + ".original.class");
+      if (cachedFile.exists() && referenceFile.exists()) {
         try {
-          byte[] instBytes = Files.readAllBytes(cachedFile.toPath());
-          System.err.println(" Found in disk-cache!");
-          instrumentedBytes.put(cname, instBytes);
-          return instBytes;
+          byte[] origBytes = Files.readAllBytes(referenceFile.toPath());
+          if (Arrays.equals(cbuf, origBytes)) {
+            byte[] instBytes = Files.readAllBytes(cachedFile.toPath());
+            System.err.println(" Found in disk-cache!");
+            instrumentedBytes.put(cname, instBytes);
+            return instBytes;
+          }
         } catch (IOException e) {
           System.err.print(" <cache error> ");
         }
@@ -136,12 +141,14 @@ public class SnoopInstructionTransformer implements ClassFileTransformer {
 
       if (writeInstrumentedClasses) {
         try {
-          File file = new File(instDir + "/" + cname + ".class");
-          File parent = new File(file.getParent());
+          File parent = new File(cachedFile.getParent());
           parent.mkdirs();
-          FileOutputStream out = new FileOutputStream(file);
-          out.write(ret);
-          out.close();
+          try(FileOutputStream out = new FileOutputStream(cachedFile)) {
+            out.write(ret);
+          }
+          try(FileOutputStream out = new FileOutputStream(referenceFile)) {
+            out.write(cbuf);
+          }
         } catch(Exception e) {
           e.printStackTrace();
         }
